@@ -1,3 +1,4 @@
+import { Button, IconButton, InputBase } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
@@ -9,7 +10,6 @@ import {
   MessageCircle,
   Plus,
   Search,
-  ShieldCheck,
 } from 'lucide-react';
 import { useChatSession } from '../model/useChatSession';
 import { time, date } from '@/shared/lib/dates';
@@ -36,6 +36,11 @@ export default function Chat({ session, onLogout }: { session: Session; onLogout
   const [showNew, setShowNew] = useState(false);
   const bottom = useRef<HTMLDivElement | null>(null);
   const chat = chats.find((item) => item.id === activeId);
+  const search = query.trim().toLowerCase();
+  const visibleChats = chats
+    .filter((item) => `${item.name} ${item.phone ?? ''}`.toLowerCase().includes(search))
+    .map((item) => ({ chat: item, lastMessage: item.messages.at(-1) }))
+    .sort((a, b) => (b.lastMessage?.time ?? 0) - (a.lastMessage?.time ?? 0));
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: 'end' });
   }, [chat?.messages.length, activeId]);
@@ -56,47 +61,47 @@ export default function Chat({ session, onLogout }: { session: Session; onLogout
           <h1>
             Сообщения <span>{chats.length}</span>
           </h1>
-          <button className="new-button" onClick={() => setShowNew(true)} aria-label="Новый чат">
+          <IconButton
+            className="new-button"
+            onClick={() => setShowNew(true)}
+            aria-label="Новый чат"
+          >
             <Plus size={21} />
-          </button>
+          </IconButton>
         </div>
         <div className="search-field">
           <Search size={18} />
-          <input
-            aria-label="Поиск чатов"
+          <InputBase
+            slotProps={{ input: { 'aria-label': 'Поиск чатов' } }}
             placeholder="Поиск"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
         </div>
         <nav className="chat-list" aria-label="Чаты">
-          {[...chats]
-            .sort((a, b) => (b.messages.at(-1)?.time || 0) - (a.messages.at(-1)?.time || 0))
-            .filter((item) =>
-              `${item.name} ${item.phone || ''}`.toLowerCase().includes(query.toLowerCase()),
-            )
-            .map((item) => (
-              <button
-                className={`chat-item ${item.id === activeId ? 'selected' : ''}`}
-                key={item.id}
-                onClick={() => setActiveId(item.id)}
-              >
-                <div className="avatar">
-                  {item.name.startsWith('+') ? (
-                    <MessageCircle size={23} />
-                  ) : (
-                    item.name.slice(0, 2).toUpperCase()
-                  )}
+          {visibleChats.map(({ chat: item, lastMessage }) => (
+            <Button
+              className={`chat-item ${item.id === activeId ? 'selected' : ''}`}
+              key={item.id}
+              aria-current={item.id === activeId ? 'true' : undefined}
+              onClick={() => setActiveId(item.id)}
+            >
+              <div className="avatar">
+                {item.name.startsWith('+') ? (
+                  <MessageCircle size={23} />
+                ) : (
+                  item.name.slice(0, 2).toUpperCase()
+                )}
+              </div>
+              <div className="chat-item-copy">
+                <div>
+                  <strong>{item.name}</strong>
+                  <time>{lastMessage ? time(lastMessage.time) : ''}</time>
                 </div>
-                <div className="chat-item-copy">
-                  <div>
-                    <strong>{item.name}</strong>
-                    <time>{item.messages.length ? time(item.messages.at(-1)!.time) : ''}</time>
-                  </div>
-                  <p>{item.messages.at(-1)?.text || 'Нет сообщений'}</p>
-                </div>
-              </button>
-            ))}
+                <p>{lastMessage?.text || 'Нет сообщений'}</p>
+              </div>
+            </Button>
+          ))}
           {!chats.length && (
             <div className="no-chats">
               <MessageCircle size={30} />
@@ -106,15 +111,12 @@ export default function Chat({ session, onLogout }: { session: Session; onLogout
                 <br />
                 по номеру телефона.
               </p>
-              <button className="text-button" onClick={() => setShowNew(true)}>
+              <Button className="text-button" onClick={() => setShowNew(true)}>
                 Создать чат <Plus size={16} />
-              </button>
+              </Button>
             </div>
           )}
-          {!!chats.length &&
-            !chats.some((item) =>
-              `${item.name} ${item.phone || ''}`.toLowerCase().includes(query.toLowerCase()),
-            ) && <p className="no-results">Чаты не найдены</p>}
+          {!!chats.length && !visibleChats.length && <p className="no-results">Чаты не найдены</p>}
         </nav>
         <footer className="account">
           <div className="account-avatar">Я</div>
@@ -125,7 +127,7 @@ export default function Chat({ session, onLogout }: { session: Session; onLogout
               {pollError ? 'Нет соединения' : 'Подключён к MAX'}
             </span>
           </div>
-          <button
+          <IconButton
             className="icon-button"
             aria-label="Выйти"
             title="Выйти"
@@ -134,7 +136,7 @@ export default function Chat({ session, onLogout }: { session: Session; onLogout
             }}
           >
             <LogOut size={19} />
-          </button>
+          </IconButton>
         </footer>
       </aside>
       <section className="conversation" aria-label="Переписка">
@@ -147,26 +149,26 @@ export default function Chat({ session, onLogout }: { session: Session; onLogout
         {pollError && (
           <div className="notice error" role="alert">
             <span>{pollError} Получение сообщений прервано.</span>
-            <button
+            <Button
               className="text-button"
               onClick={() => {
                 reconnect();
               }}
             >
               Подключиться снова
-            </button>
+            </Button>
           </div>
         )}
         {chat ? (
           <>
             <header className="conversation-header">
-              <button
+              <IconButton
                 className="icon-button mobile-back"
                 aria-label="Назад к чатам"
                 onClick={() => setActiveId(null)}
               >
                 <ArrowLeft size={22} />
-              </button>
+              </IconButton>
               <div className="avatar">
                 {chat.name.startsWith('+') ? (
                   <MessageCircle size={23} />
@@ -239,19 +241,13 @@ export default function Chat({ session, onLogout }: { session: Session; onLogout
           <div className="welcome">
             <div className="welcome-art">
               <MessageCircle size={55} strokeWidth={1.5} />
-              <span className="spark spark-one" />
-              <span className="spark spark-two" />
             </div>
             <h2>Выберите чат</h2>
             <p>Откройте переписку слева или добавьте собеседника.</p>
-            <button className="primary" onClick={() => setShowNew(true)}>
+            <Button className="primary" onClick={() => setShowNew(true)}>
               <Plus size={19} />
               Создать чат
-            </button>
-            <div className="welcome-footer">
-              <ShieldCheck size={15} />
-              Сообщения отправляются через GREEN-API
-            </div>
+            </Button>
           </div>
         )}
       </section>

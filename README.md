@@ -1,13 +1,19 @@
 ﻿# Чат MAX
 
 Тестовое задание: отправка и получение текстовых сообщений через GREEN-API.
-React, TypeScript, TanStack Query, Vite. Серверная часть не нужна.
+React, TypeScript, MUI, TanStack Query, Vite. Серверная часть не нужна.
+
+Онлайн-версия: https://max-green-api-chat.vercel.app
+
+Для входа нужны данные своего инстанса GREEN-API.
 
 ## Запуск
 
 Нужен Node.js 22.12 или новее.
 
 ```sh
+git clone https://github.com/Nastoiker/test-greep-api.git
+cd test-greep-api
 npm ci
 cp .env.example .env
 npm run dev
@@ -72,7 +78,7 @@ Enter отправляет сообщение, Shift + Enter добавляет 
 
 Проект разделён по FSD:
 
-- `app` — точка входа, QueryProvider и стили;
+- `app` — точка входа, QueryProvider, тема MUI и стили;
 - `pages` — экраны входа и чата, состояние переписки;
 - `features` — авторизация, создание чата, ввод сообщения;
 - `entities` — типы и операции с чатами, тип сессии;
@@ -115,5 +121,17 @@ npm run preview
 ```
 
 Готовые файлы находятся в `dist/`. Их можно разместить на статическом HTTPS-хостинге.
+
+### Публикация на Vercel
+
+Сборка настроена в `vercel.json`. После входа в свой аккаунт:
+
+```sh
+npx vercel login
+npx vercel deploy --prod --project max-green-api-chat
+```
+
+Текущая версия опубликована через CLI. Автоматическая публикация при push в GitHub не настроена.
+Локальные `.env` исключены из загрузки через `.vercelignore`; используются значения по умолчанию из `shared/config`.
 
 Документация GREEN-API: [отправка](https://green-api.com/v3/docs/api/sending/SendMessage/), [получение уведомлений](https://green-api.com/v3/docs/api/receiving/technology-http-api/), [поиск по номеру](https://green-api.com/v3/docs/api/service/CheckAccount/).

@@ -127,6 +127,17 @@ test('unauthorized instance stays on login', async ({ page }) => {
   await expect(page.getByRole('alert')).toContainText('Инстанс не авторизован');
   await expect(page.getByRole('button', { name: 'Войти в чат' })).toBeEnabled();
 });
+
+test('new chat dialog returns keyboard focus to its trigger after Escape', async ({ page }) => {
+  await mockApi(page);
+  await login(page);
+  const trigger = page.getByRole('button', { name: 'Новый чат', exact: true });
+  await trigger.click();
+  await expect(page.getByRole('textbox', { name: 'Номер телефона' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
 test('mobile navigation and no horizontal overflow', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockApi(page);
